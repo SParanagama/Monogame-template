@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PipelineBuildEvent xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-  <SourceFile>D:/workspace/monogame/MGame/Content/textures/simba_cub.png</SourceFile>
-  <SourceTime>2019-03-29T11:17:36.0500147+11:00</SourceTime>
-  <DestFile>D:/workspace/monogame/MGame/Content/bin/DesktopGL/Content/textures/simba_cub.xnb</DestFile>
-  <DestTime>2020-11-01T12:43:26.0218273+11:00</DestTime>
+  <SourceFile>D:/workspace/monogame/MGame/Content/textures/tile.png</SourceFile>
+  <SourceTime>2020-11-01T07:33:40.8404456+11:00</SourceTime>
+  <DestFile>D:/workspace/monogame/MGame/Content/bin/DesktopGL/textures/tile.xnb</DestFile>
+  <DestTime>2020-11-01T07:35:50.0828744+11:00</DestTime>
   <Importer>TextureImporter</Importer>
   <ImporterTime>2020-08-10T16:17:54+10:00</ImporterTime>
   <Processor>TextureProcessor</Processor>
