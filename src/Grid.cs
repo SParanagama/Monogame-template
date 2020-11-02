@@ -98,7 +98,7 @@ class Grid {
         Vector3.Transform(ref start, ref worldToScreen, out transformedStart);
         Vector3.Transform(ref end,   ref worldToScreen, out transformedEnd);
 
-        Console.WriteLine("Transformed Line: " + transformedStart.ToString() + ", " + transformedEnd.ToString());
+        //Console.WriteLine("Transformed Line: " + transformedStart.ToString() + ", " + transformedEnd.ToString());
         Vector3 lineVector = transformedStart - transformedEnd;
         Vector2 lineVector2D = new Vector2(lineVector.X, lineVector.Y);
         float lineAngle = (float)( Math.Atan2(transformedEnd.Y - transformedStart.Y, transformedEnd.X - transformedStart.X));

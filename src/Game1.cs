@@ -21,11 +21,12 @@ namespace MGame
         private SpriteBatch _spriteBatch;
 
         private static Rectangle CANVAS = new Rectangle(0, 0, 1920, 1080);
-        private static float SCALE = 256f;
+        private static float SCALE = 172f;
         private static float spriteScale = 1f;
         private RenderTarget2D _finalGameTarget;
 
         private float zNear, zFar;
+        private float speed = 2f;
         private Camera camera;
         //private Matrix projectionMatrix;
         private Matrix worldToScreenSpaceMatrix;
@@ -60,10 +61,10 @@ namespace MGame
             
             zNear = -100; zFar = 100;
             camera = new Camera(CANVAS.Width, CANVAS.Height, zNear, zFar);
-            camera.Position.X = 5f;
-            camera.Position.Y = -8f;
-            camera.Position.Z = 5f;
-            camera.Rotation.X = 54.736f;
+            camera.Position.X = 0.05f;
+            camera.Position.Y = -0.05f;
+            camera.Position.Z = 0.05f;
+            camera.Rotation.X = 54.736f+180f; // Figure out later
             camera.Rotation.Y = 0f;
             camera.Rotation.Z = 45f;
             camera.Zoom = 1.0f;
@@ -96,17 +97,34 @@ namespace MGame
             pixel.SetData(pixelColor);
 
             tile = Content.Load<Texture2D>(@"textures/tile");
-            tiles = new Vector3[3];
+            tiles = new Vector3[4];
             tiles[0] = new Vector3();
             tiles[1] = new Vector3(1f, 1f, 0f);
-            tiles[2] = new Vector3(1f, 0f, 0f);
-            transformedTiles = new Vector3[3];
+            tiles[2] = new Vector3(2f, 0f, 0f);
+            tiles[3] = new Vector3(4f, 0f, 0f);
+            transformedTiles = new Vector3[4];
         }
 
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
+            camera.DeriveWorldToScreenSpaceTransformationMatrix(SCALE, out worldToScreenSpaceMatrix);
+            ref Matrix viewMatrix = ref camera.GetViewRotationMatrix();
+            Matrix inverseRotationMatrix = Matrix.Invert(viewMatrix);
+
+            GamePadState gamePadState = GamePad.GetState(PlayerIndex.One);
+            Vector3 controllerVector = new Vector3(
+                gamePadState.ThumbSticks.Right.X,
+                -gamePadState.ThumbSticks.Right.Y*2f,
+                0f
+            );
+
+            Vector3 viewAlignedControllerAxis = Vector3.Transform(controllerVector, inverseRotationMatrix);
+
+            camera.Position.X += viewAlignedControllerAxis.X * speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            camera.Position.Y += viewAlignedControllerAxis.Y * speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             //tilePos.X += 0.1f;
 
@@ -120,14 +138,16 @@ namespace MGame
 
             // TODO: Add your drawing code here
 
-            camera.DeriveWorldToScreenSpaceTransformationMatrix(SCALE, out worldToScreenSpaceMatrix);
             _spriteBatch.Begin();
             grid.Draw(ref worldToScreenSpaceMatrix, _spriteBatch, pixel);
 
             //Vector3.Transform(ref tilePos, ref viewProjectionMatrix, out transformedTilePos);
             Vector3.Transform(tiles, ref worldToScreenSpaceMatrix, transformedTiles);
-            SortSprites(ref transformedTiles);
-            foreach (Vector3 t in transformedTiles) {
+            // Sort by Y before Drawing
+            Array.Sort(transformedTiles, (t1, t2) => t1.Y.CompareTo(t2.Y));
+
+            for(int i=0; i<transformedTiles.Length; i++) {
+                Vector3 t = transformedTiles[i];
                 _spriteBatch.Draw(
                     texture: tile,
                     position: new Vector2(t.X, t.Y),
@@ -146,7 +166,7 @@ namespace MGame
             /** Render final render target to screen */
             GraphicsDevice.SetRenderTarget(null);
 
-             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+             _spriteBatch.Begin();
              _spriteBatch.Draw(_finalGameTarget, new Rectangle(0,0, Window.ClientBounds.Width, Window.ClientBounds.Height), Color.White);
              _spriteBatch.End();
             
@@ -161,10 +181,10 @@ namespace MGame
             for(int i=0; i<input.Length-1; i++) {
                 Vector3 iVector = input[i];
                 int min = i;
-                float minSum = iVector.Y;
-                for(int j=i+1; j<input.Length-1; j++) {
+                float minSum = iVector.Z;
+                for(int j=i; j<input.Length-1; j++) {
                     Vector3 jV = input[j];
-                    float jSum = jV.Y;
+                    float jSum = jV.Z;
                     if(jSum < minSum) {
                         min = j;
                         minSum = jSum;
@@ -188,12 +208,13 @@ namespace MGame
             // Tip: if we don't call ImGui.Begin()/ImGui.End() the widgets appears in a window automatically called "Debug"
             {
                 ImGui.Text("Hello, world!");
+                ImGui.SliderFloat("Cam.Speed", ref speed, -5f, 5f, string.Empty);
                 ImGui.SliderFloat("Cam.Pos.X", ref camera.Position.X, -10f, 10f, string.Empty);
                 ImGui.SliderFloat("Cam.Pos.Y", ref camera.Position.Y, -10f, 10f, string.Empty);
                 ImGui.SliderFloat("Cam.Pos.Z", ref camera.Position.Z, -10f, 10f, string.Empty);
-                ImGui.SliderFloat("Cam.Pitch", ref camera.Rotation.X, -180f, 180f, string.Empty);
-                ImGui.SliderFloat("Cam.Yaw", ref camera.Rotation.Y, -180f, 180f, string.Empty);
-                ImGui.SliderFloat("Cam.Roll", ref camera.Rotation.Z, -180f, 180f, string.Empty);
+                ImGui.SliderFloat("Cam.Pitch", ref camera.Rotation.X, 0f, 360f, string.Empty);
+                ImGui.SliderFloat("Cam.Yaw", ref camera.Rotation.Y, 0f, 360f, string.Empty);
+                ImGui.SliderFloat("Cam.Roll", ref camera.Rotation.Z, 0f, 360f, string.Empty);
                 ImGui.SliderFloat("Cam.Zoom", ref camera.Zoom, 0.01f, 2.0f, string.Empty);
                 ImGui.SliderFloat("Sprite.Sca;e", ref spriteScale, 1f, 5.0f, string.Empty);
                 ImGui.Text(String.Format("Cam.Rotation: {0},{1},{2}, Zoom: {3}", camera.Rotation.X, camera.Rotation.Y, camera.Rotation.Z, camera.Zoom));

@@ -17,6 +17,7 @@ class Camera {
     private Matrix cameraTranslationMatrix;
     private Matrix screenSpaceTransformationMatrix;
     private Matrix projectionMatrix;
+    private Matrix viewMatrix;
 
     public Camera(float canvasWidth, float canvasHeight, float zNear, float zFar) {
         Position = new Vector3();
@@ -25,6 +26,7 @@ class Camera {
         cameraTranslationMatrix = new Matrix();
         cameraRotationMatrix = new Matrix();
         projectionMatrix = new Matrix();
+        viewMatrix = new Matrix();
         /** View Transformed points are in Normallized Device Coordinates */
         /**
                    (0,1)
@@ -53,13 +55,18 @@ class Camera {
     public void DeriveWorldToScreenSpaceTransformationMatrix(float scale, out Matrix worldToScreenSpaceMatrix) {
         Matrix.CreateScale(scale, out scaleMatrix);
         Matrix.CreateTranslation(-Position.X, -Position.Y, -Position.Z, out cameraTranslationMatrix);
-        Matrix.CreateFromYawPitchRoll(MathHelper.ToRadians(-Rotation.Y),  // Yaw 
-                                      MathHelper.ToRadians(-Rotation.X),  // Pitch
-                                      MathHelper.ToRadians(-Rotation.Z), out cameraRotationMatrix);
+        Matrix.CreateFromYawPitchRoll(-MathHelper.ToRadians(Rotation.Y),  // Yaw 
+                                      -MathHelper.ToRadians(Rotation.X),  // Pitch
+                                      -MathHelper.ToRadians(Rotation.Z), out cameraRotationMatrix);
         float aspectRatio = canvasWidth/canvasHeight;
         float zoomedWidth = canvasWidth*Zoom;
         Matrix.CreateOrthographic(zoomedWidth, zoomedWidth/aspectRatio, zNear, zFar, out projectionMatrix);
-        worldToScreenSpaceMatrix = screenSpaceTransformationMatrix * projectionMatrix * cameraTranslationMatrix * cameraRotationMatrix * scaleMatrix;
+        Matrix.Multiply(ref cameraTranslationMatrix, ref cameraRotationMatrix, out viewMatrix);
+        worldToScreenSpaceMatrix = screenSpaceTransformationMatrix * projectionMatrix * viewMatrix * scaleMatrix;
+    }
+
+    public ref Matrix GetViewRotationMatrix() {
+        return ref cameraRotationMatrix;
     }
 
 }
